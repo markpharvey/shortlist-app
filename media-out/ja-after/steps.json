@@ -1,0 +1,66 @@
+[
+  {
+    "n": 1,
+    "name": "empty",
+    "note": "The new Applications page, before anything is added",
+    "file": "01-empty.png",
+    "ms": 14245,
+    "url": "/applications"
+  },
+  {
+    "n": 2,
+    "name": "form-filled",
+    "note": "Adding an application: every field in one form",
+    "file": "02-form-filled.png",
+    "ms": 31513,
+    "url": "/applications"
+  },
+  {
+    "n": 3,
+    "name": "rule-blocks-bad-salary",
+    "note": "Rule 2 in action: salary from is more than salary to",
+    "file": "03-rule-blocks-bad-salary.png",
+    "ms": 66268,
+    "url": "/applications"
+  },
+  {
+    "n": 4,
+    "name": "three-added",
+    "note": "Three applications, newest first, with top skills on the left",
+    "file": "04-three-added.png",
+    "ms": 70660,
+    "url": "/applications"
+  },
+  {
+    "n": 5,
+    "name": "filter-react",
+    "note": "Click a skill to filter: only the React jobs",
+    "file": "05-filter-react.png",
+    "ms": 72131,
+    "url": "/applications"
+  },
+  {
+    "n": 6,
+    "name": "filter-commute",
+    "note": "Max commute 45 minutes: the 70-minute in-person job is hidden, remote stays",
+    "file": "06-filter-commute.png",
+    "ms": 75477,
+    "url": "/applications"
+  },
+  {
+    "n": 7,
+    "name": "moved-to-interview",
+    "note": "Moved to Interview: the date applied fills in, the card turns amber",
+    "file": "07-moved-to-interview.png",
+    "ms": 77766,
+    "url": "/applications"
+  },
+  {
+    "n": 8,
+    "name": "after-reload",
+    "note": "After a reload: everything was saved by the API",
+    "file": "08-after-reload.png",
+    "ms": 78900,
+    "url": "/applications"
+  }
+]
