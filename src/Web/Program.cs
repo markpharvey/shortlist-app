@@ -15,7 +15,12 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 // Creates or upgrades the database on start, in every environment.
-await app.InitialiseDatabaseAsync();
+// Skipped when the build runs the app only to write the API description.
+var writingApiDescription = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
+if (!writingApiDescription)
+{
+    await app.InitialiseDatabaseAsync();
+}
 
 if (!app.Environment.IsDevelopment())
 {
