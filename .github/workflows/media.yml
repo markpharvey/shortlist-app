@@ -1,0 +1,58 @@
+# Records the app for teaching material. Runs only on branches named media/<label>:
+# builds and starts the real app, walks through it with Playwright, then commits the
+# video, screenshots and generated API client to media-out/<label>/ on that branch.
+name: media
+on:
+  push:
+    branches: ['media/**']
+permissions:
+  contents: write
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the API (also writes the OpenAPI description)
+        run: dotnet build src/Web -c Release
+      - name: Build the React app (generates the typed API client first)
+        working-directory: src/Web/ClientApp
+        run: |
+          npm ci
+          npm run build
+          cp -r build/. ../wwwroot/
+      - name: Type check
+        working-directory: src/Web/ClientApp
+        run: npx tsc --noEmit -p . > ../../../typecheck.txt 2>&1 || true
+      - name: Start the app
+        run: |
+          ASPNETCORE_ENVIRONMENT=Development nohup dotnet run --project src/Web -c Release --no-build \
+            --no-launch-profile --urls http://127.0.0.1:5080 > app.log 2>&1 &
+          for i in $(seq 1 60); do curl -fs http://127.0.0.1:5080/ >/dev/null && break; sleep 2; done
+          curl -fsS http://127.0.0.1:5080/ | head -5
+      - name: Walk through with Playwright
+        working-directory: .github/media
+        run: |
+          npm init -y >/dev/null
+          npm i playwright@1 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          node walkthrough.mjs http://127.0.0.1:5080 out
+      - name: Save results to the branch
+        if: always()
+        run: |
+          label=${GITHUB_REF_NAME#media/}
+          dest=media-out/$label
+          mkdir -p $dest
+          cp -r .github/media/out/. $dest/ 2>/dev/null || true
+          cp src/Web/ClientApp/src/web-api-client.ts src/Web/wwwroot/openapi/v1.json typecheck.txt app.log $dest/ 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f $dest
+          git commit -m "Recording: $label"
+          git push origin HEAD:$GITHUB_REF_NAME
