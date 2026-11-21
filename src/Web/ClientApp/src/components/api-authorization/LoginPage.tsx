@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, type ChangeEvent, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import type { LoginState } from './ProtectedRoute';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,18 +11,18 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await login(email, password);
-      const returnUrl = location.state?.returnUrl || '/';
+      const returnUrl = (location.state as LoginState | null)?.returnUrl ?? '/';
       navigate(returnUrl, { replace: true });
     } catch {
       setInvalid(true);
     }
   };
 
-  const handleChange = (setter) => (e) => {
+  const handleChange = (setter: Dispatch<SetStateAction<string>>) => (e: ChangeEvent<HTMLInputElement>) => {
     setInvalid(false);
     setter(e.target.value);
   };

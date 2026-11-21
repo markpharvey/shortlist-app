@@ -1,30 +1,16 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext } from 'react';
 
-const STORAGE_KEY = 'picoColorScheme';
+export type Theme = 'auto' | 'light' | 'dark';
 
-const ThemeContext = createContext({});
-
-export function useTheme() {
-  return useContext(ThemeContext);
+export interface ThemeContextValue {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
 }
 
-export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem(STORAGE_KEY) || 'auto'
-  );
+export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-  useEffect(() => {
-    if (theme === 'auto') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-    localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+export function useTheme(): ThemeContextValue {
+  const value = useContext(ThemeContext);
+  if (!value) throw new Error('useTheme must be used inside <ThemeProvider>');
+  return value;
 }

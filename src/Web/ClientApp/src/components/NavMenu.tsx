@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './api-authorization/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
@@ -6,7 +7,7 @@ function AuthLinks() {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async (e) => {
+  const handleLogout = async (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     await logout();
     navigate('/login');

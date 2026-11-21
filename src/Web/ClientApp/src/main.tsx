@@ -1,13 +1,13 @@
 import './styles.scss';
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 
-const baseUrl = document.getElementsByTagName('base')[0].getAttribute('href');
-const root = createRoot(document.getElementById('root'));
+const baseUrl = document.getElementsByTagName('base')[0]?.getAttribute('href') ?? '/';
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('index.html has no #root element');
 
-root.render(
+createRoot(rootElement).render(
   <BrowserRouter basename={baseUrl}>
     <App />
   </BrowserRouter>

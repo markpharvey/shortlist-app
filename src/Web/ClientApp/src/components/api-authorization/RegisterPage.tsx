@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 const MIN_PASSWORD_LENGTH = 6;
 
-function validateEmail(value) {
+function validateEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
@@ -23,7 +23,7 @@ export function RegisterPage() {
   const emailInvalid = emailTouched ? !emailValid : undefined;
   const passwordInvalid = passwordTouched ? !passwordValid : undefined;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setEmailTouched(true);

@@ -1,22 +1,62 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type CSSProperties, type KeyboardEvent } from 'react';
 import { Plus, Settings, MoreHorizontal } from 'lucide-react';
-import { TodoListsClient, TodoItemsClient } from '../web-api-client.ts';
+import {
+  TodoListsClient, TodoItemsClient, SwaggerException,
+  CreateTodoListCommand, UpdateTodoListCommand,
+  CreateTodoItemCommand, UpdateTodoItemCommand, UpdateTodoItemDetailCommand,
+  type TodoListDto, type TodoItemDto,
+} from '../web-api-client';
 
 const listsClient = new TodoListsClient();
 const itemsClient = new TodoItemsClient();
 
+// The generated API types mark every field optional. These are the shapes this
+// page actually works with; the API data is checked and filled in once, below.
+interface Item { id: number; listId: number; title: string; done: boolean; priority: number; note: string; }
+interface List { id: number; title: string; colour: string; items: Item[]; }
+interface Lookup { id: number; title: string; }
+interface Colour { name: string; code: string; }
+interface ListOptions { title: string; colour: string; }
+interface ItemDetails { listId: number; priority: number; note: string; }
+
+const toItem = (dto: TodoItemDto): Item => ({
+  id: dto.id ?? 0,
+  listId: dto.listId ?? 0,
+  title: dto.title ?? '',
+  done: dto.done ?? false,
+  priority: dto.priority ?? 0,
+  note: dto.note ?? '',
+});
+
+const toList = (dto: TodoListDto): List => ({
+  id: dto.id ?? 0,
+  title: dto.title ?? '',
+  colour: dto.colour ?? '',
+  items: (dto.items ?? []).map(toItem),
+});
+
+// Pico CSS reads these custom properties; React's style type doesn't know them.
+const dangerButtonStyle = {
+  '--pico-background-color': 'var(--pico-del-color)',
+  '--pico-border-color': 'var(--pico-del-color)',
+  '--pico-color': '#fff',
+} as CSSProperties;
+
+const noListOptions: ListOptions = { title: '', colour: '' };
+const noItemDetails: ItemDetails = { listId: 0, priority: 0, note: '' };
+
 export function Tasks() {
-  const [lists, setLists] = useState(null);
-  const [priorityLevels, setPriorityLevels] = useState([]);
-  const [colours, setColours] = useState([]);
-  const [selectedListId, setSelectedListId] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [editingItem, setEditingItem] = useState(null);
+  const [lists, setLists] = useState<List[] | null>(null);
+  const [priorityLevels, setPriorityLevels] = useState<Lookup[]>([]);
+  const [colours, setColours] = useState<Colour[]>([]);
+  const [selectedListId, setSelectedListId] = useState<number | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [editValue, setEditValue] = useState('');
   const [newItemTitle, setNewItemTitle] = useState('');
   const [addingItem, setAddingItem] = useState(false);
-  const [listOptionsEditor, setListOptionsEditor] = useState({});
-  const [itemDetailsEditor, setItemDetailsEditor] = useState({});
+  const [listOptionsEditor, setListOptionsEditor] = useState<ListOptions>(noListOptions);
+  const [itemDetailsEditor, setItemDetailsEditor] = useState<ItemDetails>(noItemDetails);
   const [newListTitle, setNewListTitle] = useState('');
   const [newListColour, setNewListColour] = useState('');
   const [newListError, setNewListError] = useState('');
@@ -25,92 +65,102 @@ export function Tasks() {
   const editCancelledRef = useRef(false);
   const newItemCancelledRef = useRef(false);
 
-  const newListDialogRef = useRef(null);
-  const listOptionsDialogRef = useRef(null);
-  const deleteListDialogRef = useRef(null);
-  const itemDetailsDialogRef = useRef(null);
+  const newListDialogRef = useRef<HTMLDialogElement>(null);
+  const listOptionsDialogRef = useRef<HTMLDialogElement>(null);
+  const deleteListDialogRef = useRef<HTMLDialogElement>(null);
+  const itemDetailsDialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     listsClient.getTodoLists().then(result => {
-      setLists(result.lists);
-      setPriorityLevels(result.priorityLevels);
-      const apiColours = result.colours.map(c => ({ name: c.name, code: c.code }));
+      const apiLists = (result.lists ?? []).map(toList);
+      setLists(apiLists);
+      setPriorityLevels((result.priorityLevels ?? []).map(p => ({ id: p.id ?? 0, title: p.title ?? '' })));
+      const apiColours = (result.colours ?? []).map(c => ({ name: c.name ?? '', code: c.code ?? '' }));
       setColours(apiColours);
       setNewListColour(apiColours[0]?.code ?? '');
-      if (result.lists.length) setSelectedListId(result.lists[0].id);
+      if (apiLists.length) setSelectedListId(apiLists[0].id);
     }).catch(console.error);
   }, []);
 
   // Switching lists clears the half-typed new item.
-  const selectList = id => {
+  const selectList = (id: number | null) => {
     setSelectedListId(id);
     setNewItemTitle('');
     setAddingItem(false);
   };
 
   const selectedList = lists?.find(l => l.id === selectedListId) ?? null;
-  const remainingItems = list => list.items.filter(t => !t.done).length;
+  const remainingItems = (list: List) => list.items.filter(t => !t.done).length;
+  const firstColour = () => colours[0]?.code ?? '';
 
   // ── Lists ──────────────────────────────────────────────────────────────────
 
   const showNewListDialog = () => {
     setNewListTitle('');
-    setNewListColour(colours[0].code);
+    setNewListColour(firstColour());
     setNewListError('');
-    newListDialogRef.current.showModal();
+    newListDialogRef.current?.showModal();
     setTimeout(() => document.getElementById('newListTitle')?.focus(), 50);
   };
 
   const closeNewListDialog = () => {
-    newListDialogRef.current.close();
+    newListDialogRef.current?.close();
     setNewListTitle('');
-    setNewListColour(colours[0].code);
+    setNewListColour(firstColour());
     setNewListError('');
   };
 
   const commitNewList = async () => {
-    if (!newListTitle.trim()) return;
+    const title = newListTitle.trim();
+    if (!title) return;
     try {
-      const id = await listsClient.createTodoList({ title: newListTitle.trim(), colour: newListColour });
-      const newList = { id, title: newListTitle.trim(), colour: newListColour, items: [] };
-      setLists(ls => [...ls, newList]);
+      const id = await listsClient.createTodoList(new CreateTodoListCommand({ title, colour: newListColour }));
+      const newList: List = { id, title, colour: newListColour, items: [] };
+      setLists(ls => [...(ls ?? []), newList]);
       selectList(id);
       closeNewListDialog();
     } catch (e) {
-      try {
-        const errors = JSON.parse(e.response).errors;
-        if (errors?.Title) { setNewListError(errors.Title[0]); return; }
-      } catch { /* ignore */ }
+      if (e instanceof SwaggerException) {
+        try {
+          const errors: Record<string, string[]> | undefined = JSON.parse(e.response).errors;
+          if (errors?.Title) { setNewListError(errors.Title[0]); return; }
+        } catch { /* not a validation error */ }
+      }
       setNewListError('Failed to create list.');
     }
   };
 
   const showListOptionsDialog = () => {
-    setListOptionsEditor({ id: selectedList.id, title: selectedList.title, colour: selectedList.colour || colours[0].code });
-    listOptionsDialogRef.current.showModal();
+    if (!selectedList) return;
+    setListOptionsEditor({ title: selectedList.title, colour: selectedList.colour || firstColour() });
+    listOptionsDialogRef.current?.showModal();
   };
 
   const closeListOptionsDialog = () => {
-    listOptionsDialogRef.current.close();
-    setListOptionsEditor({});
+    listOptionsDialogRef.current?.close();
+    setListOptionsEditor(noListOptions);
   };
 
   const updateListOptions = async () => {
+    if (!selectedList) return;
+    const { id } = selectedList;
+    const { title, colour } = listOptionsEditor;
     try {
-      await listsClient.updateTodoList(selectedList.id, listOptionsEditor);
-      setLists(ls => ls.map(l => l.id === selectedList.id ? { ...l, title: listOptionsEditor.title, colour: listOptionsEditor.colour } : l));
+      await listsClient.updateTodoList(id, new UpdateTodoListCommand({ id, title, colour }));
+      setLists(ls => (ls ?? []).map(l => l.id === id ? { ...l, title, colour } : l));
       closeListOptionsDialog();
     } catch (e) { console.error(e); }
   };
 
   const confirmDeleteList = () => {
     closeListOptionsDialog();
-    deleteListDialogRef.current.showModal();
+    deleteListDialogRef.current?.showModal();
   };
 
-  const closeDeleteListDialog = () => deleteListDialogRef.current.close();
+  const closeDeleteListDialog = () => deleteListDialogRef.current?.close();
 
   const deleteListConfirmed = async () => {
+    if (!selectedList || !lists) return;
     try {
       await listsClient.deleteTodoList(selectedList.id);
       const remaining = lists.filter(l => l.id !== selectedList.id);
@@ -122,23 +172,25 @@ export function Tasks() {
 
   // ── Items ──────────────────────────────────────────────────────────────────
 
-  const showItemDetailsDialog = (item) => {
+  const showItemDetailsDialog = (item: Item) => {
     setSelectedItem(item);
-    setItemDetailsEditor({ ...item });
-    itemDetailsDialogRef.current.showModal();
+    setItemDetailsEditor({ listId: item.listId, priority: item.priority, note: item.note });
+    itemDetailsDialogRef.current?.showModal();
   };
 
   const closeItemDetailsDialog = () => {
-    itemDetailsDialogRef.current.close();
+    itemDetailsDialogRef.current?.close();
     setSelectedItem(null);
-    setItemDetailsEditor({});
+    setItemDetailsEditor(noItemDetails);
   };
 
   const updateItemDetails = async () => {
+    if (!selectedItem) return;
     const isMoving = selectedItem.listId !== itemDetailsEditor.listId;
     try {
-      await itemsClient.updateTodoItemDetail(selectedItem.id, itemDetailsEditor);
-      setLists(ls => ls.map(l => {
+      await itemsClient.updateTodoItemDetail(selectedItem.id,
+        new UpdateTodoItemDetailCommand({ id: selectedItem.id, ...itemDetailsEditor }));
+      setLists(ls => (ls ?? []).map(l => {
         if (l.id === selectedItem.listId && isMoving)
           return { ...l, items: l.items.filter(i => i.id !== selectedItem.id) };
         if (l.id === itemDetailsEditor.listId && isMoving)
@@ -151,50 +203,54 @@ export function Tasks() {
     } catch (e) { console.error(e); }
   };
 
-  const deleteItem = async (item) => {
+  const deleteItem = async (item: Item) => {
     if (itemDetailsDialogRef.current?.open) closeItemDetailsDialog();
     try {
       await itemsClient.deleteTodoItem(item.id);
-      setLists(ls => ls.map(l => l.id === selectedListId
+      setLists(ls => (ls ?? []).map(l => l.id === selectedListId
         ? { ...l, items: l.items.filter(i => i.id !== item.id) } : l));
     } catch (e) { console.error(e); }
   };
 
-  const updateCheckbox = async (item, done) => {
+  const saveItem = (item: Item) =>
+    itemsClient.updateTodoItem(item.id, new UpdateTodoItemCommand({ id: item.id, title: item.title, done: item.done }));
+
+  const updateCheckbox = async (item: Item, done: boolean) => {
     const updated = { ...item, done };
-    setLists(ls => ls.map(l => l.id === selectedListId
+    setLists(ls => (ls ?? []).map(l => l.id === selectedListId
       ? { ...l, items: l.items.map(i => i.id === item.id ? updated : i) } : l));
-    try { await itemsClient.updateTodoItem(item.id, updated); }
+    try { await saveItem(updated); }
     catch (e) { console.error(e); }
   };
 
-  const editItem = (item, inputId) => {
+  const editItem = (item: Item, inputId: string) => {
     originalTitle.current = item.title;
     setEditValue(item.title);
     setEditingItem(item);
     setTimeout(() => document.getElementById(inputId)?.focus(), 100);
   };
 
-  const cancelEdit = (e) => {
+  const cancelEdit = (e: KeyboardEvent<HTMLInputElement>) => {
     editCancelledRef.current = true;
-    setLists(ls => ls.map(l => ({
+    setLists(ls => (ls ?? []).map(l => ({
       ...l, items: l.items.map(i => i === editingItem ? { ...i, title: originalTitle.current } : i)
     })));
     setEditingItem(null);
-    e?.target.blur();
+    e.currentTarget.blur();
   };
 
   const commitEdit = async () => {
+    if (!editingItem) return;
     if (!editValue.trim()) {
       await deleteItem(editingItem);
       setEditingItem(null);
       return;
     }
     const updated = { ...editingItem, title: editValue.trim() };
-    setLists(ls => ls.map(l => l.id === selectedListId
+    setLists(ls => (ls ?? []).map(l => l.id === selectedListId
       ? { ...l, items: l.items.map(i => i === editingItem ? updated : i) } : l));
     setEditingItem(null);
-    try { await itemsClient.updateTodoItem(updated.id, updated); }
+    try { await saveItem(updated); }
     catch (e) { console.error(e); }
   };
 
@@ -203,11 +259,11 @@ export function Tasks() {
     setTimeout(() => document.getElementById('newItemInput')?.focus(), 50);
   };
 
-  const cancelNewItem = (e) => {
+  const cancelNewItem = (e: KeyboardEvent<HTMLInputElement>) => {
     newItemCancelledRef.current = true;
     setAddingItem(false);
     setNewItemTitle('');
-    e?.target.blur();
+    e.currentTarget.blur();
   };
 
   const commitNewItem = async () => {
@@ -216,10 +272,11 @@ export function Tasks() {
     const title = newItemTitle.trim();
     const listId = selectedListId;
     setNewItemTitle('');
+    if (listId === null) return;
     try {
-      const id = await itemsClient.createTodoItem({ title, listId });
-      setLists(ls => ls.map(l => l.id === listId
-        ? { ...l, items: [...l.items, { id, listId, title, done: false, priority: priorityLevels[0]?.id }] } : l));
+      const id = await itemsClient.createTodoItem(new CreateTodoItemCommand({ title, listId }));
+      const item: Item = { id, listId, title, done: false, priority: priorityLevels[0]?.id ?? 0, note: '' };
+      setLists(ls => (ls ?? []).map(l => l.id === listId ? { ...l, items: [...l.items, item] } : l));
     } catch (e) { console.error(e); }
   };
 
@@ -270,7 +327,7 @@ export function Tasks() {
                     value={editValue}
                     onChange={e => setEditValue(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter') { e.target.blur(); }
+                      if (e.key === 'Enter') { e.currentTarget.blur(); }
                       if (e.key === 'Escape') cancelEdit(e);
                     }}
                     onBlur={() => {
@@ -352,7 +409,7 @@ export function Tasks() {
           </header>
           <label htmlFor="listOptionsTitle">Title</label>
           <input type="text" id="listOptionsTitle" placeholder="List name…"
-            value={listOptionsEditor.title || ''}
+            value={listOptionsEditor.title}
             onChange={e => setListOptionsEditor(ed => ({ ...ed, title: e.target.value }))}
             onKeyDown={e => e.key === 'Enter' && updateListOptions()}
             maxLength={200} />
@@ -383,7 +440,7 @@ export function Tasks() {
           <footer>
             <button className="secondary" onClick={closeDeleteListDialog}>Cancel</button>
             <button className="danger"
-              style={{ '--pico-background-color': 'var(--pico-del-color)', '--pico-border-color': 'var(--pico-del-color)', '--pico-color': '#fff' }}
+              style={dangerButtonStyle}
               onClick={deleteListConfirmed}>Delete</button>
           </footer>
         </article>
@@ -411,10 +468,10 @@ export function Tasks() {
             ))}
           </select>
           <label htmlFor="itemNote">Note</label>
-          <textarea id="itemNote" rows={3} value={itemDetailsEditor.note || ''}
+          <textarea id="itemNote" rows={3} value={itemDetailsEditor.note}
             onChange={e => setItemDetailsEditor(ed => ({ ...ed, note: e.target.value }))}></textarea>
           <footer>
-            <button className="danger" style={{ marginInlineEnd: 'auto' }} onClick={() => deleteItem(selectedItem)}>Delete</button>
+            <button className="danger" style={{ marginInlineEnd: 'auto' }} onClick={() => selectedItem && deleteItem(selectedItem)}>Delete</button>
             <button className="secondary" onClick={closeItemDetailsDialog}>Cancel</button>
             <button onClick={updateItemDetails}>Update</button>
           </footer>
