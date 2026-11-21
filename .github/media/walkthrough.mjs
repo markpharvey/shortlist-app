@@ -70,89 +70,98 @@ async function moveTo(locator) {
 async function click(locator) { await moveTo(locator); await locator.click(); await pause(350); }
 async function type(locator, text) { await click(locator); await locator.pressSequentially(text, { delay: 55 }); }
 const nav = name => page.getByRole('navigation').getByRole('link', { name, exact: true });
+async function choose(locator, label) { await moveTo(locator); await locator.selectOption({ label }); await pause(350); }
+async function quickType(locator, text) { await click(locator); await locator.fill(''); await locator.pressSequentially(text, { delay: 18 }); }
+const dialog = () => page.locator('dialog[open]');
 
-await page.goto(base + '/');
-await page.mouse.move(mouse.x, mouse.y);
-await page.getByRole('heading', { name: 'Welcome' }).waitFor();
-await pause(1200);
-await step('home', 'The home page');
-
-// Theme: auto -> light -> dark
-const theme = page.locator('.theme-toggle-btn');
-await click(theme); await click(theme);
-await step('dark-theme', 'Theme toggle switched to dark');
-
-await click(nav('Counter'));
-const inc = page.getByRole('button', { name: 'Increment' });
-for (let i = 0; i < 3; i++) await click(inc);
-await step('counter', 'Counter after three clicks');
-
-await click(nav('Weather'));
-await page.getByRole('heading', { name: 'Log in' }).waitFor();
-await step('weather-needs-login', 'Weather is protected, so we land on Log in');
-
-await click(nav('Register'));
-const email = 'mark@shortlist.dev', password = 'Shortlist1!';
-await type(page.locator('#email'), email);
-await type(page.locator('#password'), password);
-await step('register-filled', 'Registering a new account');
-await click(page.getByRole('button', { name: 'Register' }));
-await page.getByRole('heading', { name: 'Log in' }).waitFor();
-
-await type(page.locator('#email'), email);
-await type(page.locator('#password'), password);
-await click(page.getByRole('button', { name: 'Log in' }));
-await page.getByRole('link', { name: 'Log out' }).waitFor();
-await step('logged-in', 'Logged in');
-
-await click(nav('Weather'));
-await page.locator('table tbody tr').first().waitFor();
-await step('weather', 'Weather data fetched from the C# API');
-
-await click(nav('Tasks'));
-await page.getByRole('heading', { name: 'Lists' }).waitFor();
-await step('tasks', 'The Tasks page with its seeded list');
-
-await click(page.locator('.todo-sidebar .todo-panel-header button'));
-await type(page.locator('#newListTitle'), 'Job applications');
-await click(page.locator('dialog[open] .colour-swatch').nth(2));
-await step('new-list-dialog', 'Creating a list');
-await click(page.locator('dialog[open]').getByRole('button', { name: 'Create' }));
-await page.locator('.todo-main h2', { hasText: 'Job applications' }).waitFor();
-
-for (const t of ['Apply to TechnologyOne', 'Follow up the recruiter', 'Prepare for the interview']) {
-  await click(page.locator('.todo-new-item-placeholder'));
-  await page.locator('#newItemInput').pressSequentially(t, { delay: 45 });
-  await page.keyboard.press('Enter');
-  await page.locator('.todo-main .todo-item-text', { hasText: t }).waitFor();
-  await pause(300);
+async function addApplication(a) {
+  await click(page.getByRole('button', { name: 'Add application' }));
+  await dialog().locator('#company').waitFor();
+  await quickType(page.locator('#company'), a.company);
+  await quickType(page.locator('#jobTitle'), a.title);
+  await choose(page.locator('#workArrangement'), a.work);
+  if (a.location) await quickType(page.locator('#location'), a.location);
+  if (a.commute) await quickType(page.locator('#commuteMinutes'), a.commute);
+  await quickType(page.locator('#salaryMin'), a.min);
+  await quickType(page.locator('#salaryMax'), a.max);
+  await quickType(page.locator('#technologies'), a.stack);
 }
-await step('items-added', 'Three tasks added');
 
-await click(page.locator('.todo-main .todo-item input[type=checkbox]').first());
-await step('item-done', 'First task ticked off');
+try {
+  await page.goto(base + '/');
+  await page.mouse.move(mouse.x, mouse.y);
+  const theme = page.locator('.theme-toggle-btn');
+  await click(theme); await click(theme);
 
-await click(page.locator('.todo-main .todo-item .icon-btn').nth(1));
-await moveTo(page.locator('#itemPriority'));
-await page.locator('#itemPriority').selectOption({ label: 'High' });
-await type(page.locator('#itemNote'), 'Recruiter: call back Tuesday');
-await step('item-details', 'Setting priority and a note');
-await click(page.locator('dialog[open]').getByRole('button', { name: 'Update' }));
-await pause(500);
+  // Sign up and in.
+  await click(nav('Register'));
+  const email = 'mark@shortlist.dev', password = 'Shortlist1!';
+  await type(page.locator('#email'), email);
+  await type(page.locator('#password'), password);
+  await click(page.getByRole('button', { name: 'Register' }));
+  await page.getByRole('heading', { name: 'Log in' }).waitFor();
+  await type(page.locator('#email'), email);
+  await type(page.locator('#password'), password);
+  await click(page.getByRole('button', { name: 'Log in' }));
+  await page.getByRole('link', { name: 'Log out' }).waitFor();
 
-await page.reload();
-await page.getByRole('heading', { name: 'Lists' }).waitFor();
-await click(page.locator('.todo-sidebar li', { hasText: 'Job applications' }));
-await step('after-reload', 'After a reload: everything was saved by the API');
+  await click(nav('Applications'));
+  await page.getByRole('heading', { name: 'Applications' }).waitFor();
+  await step('empty', 'The new Applications page, before anything is added');
 
-await click(page.getByRole('link', { name: 'Log out' }));
-await page.getByRole('heading', { name: 'Log in' }).waitFor();
-await step('logged-out', 'Logged out');
-await pause(800);
+  const jobs = [
+    { company: 'Kangaroo Point Software', title: 'Graduate software developer', work: 'Hybrid', location: 'Brisbane CBD', commute: '35', min: '75000', max: '85000', stack: 'C#, .NET, Azure, React' },
+    { company: 'Northbank Health Tech', title: 'Junior full stack developer', work: 'Remote', location: '', commute: '', min: '80000', max: '95000', stack: 'React, TypeScript, Node.js' },
+    { company: 'Southport Freight Systems', title: 'Integration developer', work: 'In person', location: 'Southport', commute: '70', min: '120000', max: '90000', stack: 'C#, SQL Server, Azure' },
+  ];
 
-const video = page.video();
-await context.close();
-await browser.close();
-fs.renameSync(await video.path(), path.join(out, 'walkthrough.webm'));
-fs.writeFileSync(path.join(out, 'steps.json'), JSON.stringify(steps, null, 2));
-console.log('done', steps.length, 'steps');
+  for (const [i, job] of jobs.entries()) {
+    await addApplication(job);
+    if (i === 0) await step('form-filled', 'Adding an application: every field in one form');
+    await click(dialog().getByRole('button', { name: 'Save' }));
+    if (i === 2) {
+      // Salary min is above max on purpose: rule 2 should stop it.
+      await dialog().locator('small', { hasText: 'must not be less than' }).waitFor();
+      await step('rule-blocks-bad-salary', 'Rule 2 in action: salary from is more than salary to');
+      await quickType(page.locator('#salaryMax'), '130000');
+      await click(dialog().getByRole('button', { name: 'Save' }));
+    }
+    await page.locator('.app-card h3', { hasText: job.company }).waitFor();
+  }
+  await pause(500);
+  await step('three-added', 'Three applications, newest first, with top skills on the left');
+
+  await click(page.locator('.skill', { hasText: 'React' }));
+  await page.locator('.app-card').nth(1).waitFor();
+  await step('filter-react', 'Click a skill to filter: only the React jobs');
+  await click(page.locator('.apps-filters .chip'));
+
+  await quickType(page.locator('.apps-filters input[type=number]'), '45');
+  await pause(800);
+  await step('filter-commute', 'Max commute 45 minutes: the 70-minute in-person job is hidden, remote stays');
+  await page.locator('.apps-filters input[type=number]').fill('');
+  await pause(800);
+
+  const card = page.locator('.app-card', { hasText: 'Kangaroo Point Software' });
+  await card.scrollIntoViewIfNeeded();
+  await choose(card.locator('select.app-status'), 'Interview');
+  await card.locator('.app-facts span', { hasText: /^applied/ }).waitFor();
+  await step('moved-to-interview', 'Moved to Interview: the date applied fills in, the card turns amber');
+
+  await page.reload();
+  await page.locator('.app-card').first().waitFor();
+  await pause(600);
+  await step('after-reload', 'After a reload: everything was saved by the API');
+
+  await click(page.getByRole('link', { name: 'Log out' }));
+  await page.getByRole('heading', { name: 'Log in' }).waitFor();
+  await pause(800);
+
+} finally {
+  const video = page.video();
+  await context.close();
+  await browser.close();
+  fs.renameSync(await video.path(), path.join(out, 'walkthrough.webm'));
+  fs.writeFileSync(path.join(out, 'steps.json'), JSON.stringify(steps, null, 2));
+  console.log('done', steps.length, 'steps');
+}
