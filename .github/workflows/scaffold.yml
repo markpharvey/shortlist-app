@@ -1,0 +1,30 @@
+# One-off: generates the starter solution from the Clean Architecture template
+# and commits it to the `scaffold` branch. Removed once the starter is merged.
+name: scaffold
+on:
+  push:
+    branches: [scaffold]
+    paths: [.github/workflows/scaffold.yml]
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Generate
+        run: |
+          dotnet new install Clean.Architecture.Solution.Template
+          dotnet new ca-sln -cf react -db sqlite -o /tmp/Shortlist
+          cp -rn /tmp/Shortlist/. .
+          find . -path ./.git -prune -o -type f -print | sort | head -300
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Generate starter from Clean Architecture template (React, SQLite)"
+          git push origin HEAD:scaffold
