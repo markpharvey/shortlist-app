@@ -193,13 +193,13 @@ export function Applications() {
 
   return (
     <>
-      <hgroup className="apps-head">
+      <div className="apps-head">
         <div>
           <h1>Applications</h1>
           <p>{items.length} shown · newest first</p>
         </div>
         <button onClick={() => openForm(emptyForm)}><Plus size={18} /> Add application</button>
-      </hgroup>
+      </div>
 
       <div className="apps-layout">
         <aside className="apps-side">
