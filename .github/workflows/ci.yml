@@ -40,9 +40,24 @@ jobs:
         run: npm run build
       - name: Unit tests
         run: |
-          dotnet test tests/Domain.UnitTests -c Release --no-build
-          dotnet test tests/Application.UnitTests -c Release --no-build
+          for p in Domain.UnitTests Application.UnitTests; do
+            dotnet test tests/$p -c Release --no-build --logger "trx;LogFileName=$p.trx" --results-directory TestResults
+          done
       - name: Functional and integration tests
         run: |
-          dotnet test tests/Application.FunctionalTests -c Release --no-build
-          dotnet test tests/Infrastructure.IntegrationTests -c Release --no-build
+          for p in Application.FunctionalTests Infrastructure.IntegrationTests; do
+            dotnet test tests/$p -c Release --no-build --logger "trx;LogFileName=$p.trx" --results-directory TestResults
+          done
+      # Puts the test counts on the check run as a notice, so reviewers (and the review card) can see them.
+      - name: Test counts
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob, os, xml.etree.ElementTree as ET
+          ns = {'t': 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010'}
+          parts = []
+          for f in sorted(glob.glob('TestResults/*.trx')):
+              c = ET.parse(f).getroot().find('t:ResultSummary/t:Counters', ns).attrib
+              parts.append(f"{os.path.basename(f)[:-4]}: {c['passed']}/{c['total']} passed")
+          print('::notice title=Test counts::' + ' | '.join(parts or ['no results']))
+          PY
