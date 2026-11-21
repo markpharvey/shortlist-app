@@ -1,0 +1,114 @@
+[
+  {
+    "n": 1,
+    "name": "home",
+    "note": "The home page",
+    "file": "01-home.png",
+    "ms": 1778,
+    "url": "/"
+  },
+  {
+    "n": 2,
+    "name": "dark-theme",
+    "note": "Theme toggle switched to dark",
+    "file": "02-dark-theme.png",
+    "ms": 4325,
+    "url": "/"
+  },
+  {
+    "n": 3,
+    "name": "counter",
+    "note": "Counter after three clicks",
+    "file": "03-counter.png",
+    "ms": 8874,
+    "url": "/counter"
+  },
+  {
+    "n": 4,
+    "name": "weather-needs-login",
+    "note": "Weather is protected, so we land on Log in",
+    "file": "04-weather-needs-login.png",
+    "ms": 10338,
+    "url": "/login"
+  },
+  {
+    "n": 5,
+    "name": "register-filled",
+    "note": "Registering a new account",
+    "file": "05-register-filled.png",
+    "ms": 15509,
+    "url": "/register"
+  },
+  {
+    "n": 6,
+    "name": "logged-in",
+    "note": "Logged in",
+    "file": "06-logged-in.png",
+    "ms": 21682,
+    "url": "/"
+  },
+  {
+    "n": 7,
+    "name": "weather",
+    "note": "Weather data fetched from the C# API",
+    "file": "07-weather.png",
+    "ms": 23137,
+    "url": "/weather"
+  },
+  {
+    "n": 8,
+    "name": "tasks",
+    "note": "The Tasks page with its seeded list",
+    "file": "08-tasks.png",
+    "ms": 24572,
+    "url": "/todo"
+  },
+  {
+    "n": 9,
+    "name": "new-list-dialog",
+    "note": "Creating a list",
+    "file": "09-new-list-dialog.png",
+    "ms": 29802,
+    "url": "/todo"
+  },
+  {
+    "n": 10,
+    "name": "items-added",
+    "note": "Three tasks added",
+    "file": "10-items-added.png",
+    "ms": 39068,
+    "url": "/todo"
+  },
+  {
+    "n": 11,
+    "name": "item-done",
+    "note": "First task ticked off",
+    "file": "11-item-done.png",
+    "ms": 40544,
+    "url": "/todo"
+  },
+  {
+    "n": 12,
+    "name": "item-details",
+    "note": "Setting priority and a note",
+    "file": "12-item-details.png",
+    "ms": 46182,
+    "url": "/todo"
+  },
+  {
+    "n": 13,
+    "name": "after-reload",
+    "note": "After a reload: everything was saved by the API",
+    "file": "13-after-reload.png",
+    "ms": 49620,
+    "url": "/todo"
+  },
+  {
+    "n": 14,
+    "name": "logged-out",
+    "note": "Logged out",
+    "file": "14-logged-out.png",
+    "ms": 51101,
+    "url": "/login"
+  }
+]

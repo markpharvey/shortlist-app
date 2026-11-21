@@ -1,0 +1,34 @@
+warn: LuckyPennySoftware.MediatR.License[0]
+      You do not have a valid license key for the Lucky Penny software MediatR. This is allowed for development and testing scenarios. If you are running in production you are required to have a licensed version. Please visit https://luckypennysoftware.com to obtain a valid license.
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://127.0.0.1:5080
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /home/runner/work/shortlist-app/shortlist-app/src/Web
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: Shortlist.Application.WeatherForecasts.Queries.GetWeatherForecasts.GetWeatherForecastsQuery[0]
+      Shortlist Request: GetWeatherForecastsQuery c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev GetWeatherForecastsQuery { }
+info: Shortlist.Application.TodoLists.Queries.GetTodos.GetTodosQuery[0]
+      Shortlist Request: GetTodosQuery c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev GetTodosQuery { }
+warn: LuckyPennySoftware.AutoMapper.License[0]
+      You do not have a valid license key for the Lucky Penny software AutoMapper. This is allowed for development and testing scenarios. If you are running in production you are required to have a licensed version. Please visit https://luckypennysoftware.com to obtain a valid license.
+info: Shortlist.Application.TodoLists.Commands.CreateTodoList.CreateTodoListCommand[0]
+      Shortlist Request: CreateTodoListCommand c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev CreateTodoListCommand { Title = Job applications, Colour = #5C6BC0 }
+info: Shortlist.Application.TodoItems.Commands.CreateTodoItem.CreateTodoItemCommand[0]
+      Shortlist Request: CreateTodoItemCommand c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev CreateTodoItemCommand { ListId = 2, Title = Apply to TechnologyOne }
+info: Shortlist.Application.TodoItems.Commands.CreateTodoItem.CreateTodoItemCommand[0]
+      Shortlist Request: CreateTodoItemCommand c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev CreateTodoItemCommand { ListId = 2, Title = Follow up the recruiter }
+info: Shortlist.Application.TodoItems.Commands.CreateTodoItem.CreateTodoItemCommand[0]
+      Shortlist Request: CreateTodoItemCommand c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev CreateTodoItemCommand { ListId = 2, Title = Prepare for the interview }
+info: Shortlist.Application.TodoItems.Commands.UpdateTodoItem.UpdateTodoItemCommand[0]
+      Shortlist Request: UpdateTodoItemCommand c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev UpdateTodoItemCommand { Id = 5, Title = Apply to TechnologyOne, Done = True }
+info: Shortlist.Application.TodoItems.EventHandlers.LogTodoItemCompleted[0]
+      Shortlist Domain Event: TodoItemCompletedEvent
+info: Shortlist.Application.TodoItems.Commands.UpdateTodoItemDetail.UpdateTodoItemDetailCommand[0]
+      Shortlist Request: UpdateTodoItemDetailCommand c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev UpdateTodoItemDetailCommand { Id = 6, ListId = 2, Priority = High, Note = Recruiter: call back Tuesday }
+info: Shortlist.Application.TodoLists.Queries.GetTodos.GetTodosQuery[0]
+      Shortlist Request: GetTodosQuery c54cd008-356e-46fd-bf6e-194c7b5b6011 mark@shortlist.dev GetTodosQuery { }
