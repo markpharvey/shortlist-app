@@ -1,18 +1,21 @@
 <!--
 How to fill this in. Delete these notes when done.
-- Write for someone who reads code slowly. Plain English, short sentences.
+- Dot points only. No paragraphs. Aim for under 12 words a point.
+- Pictures, tables and ticks before text.
+- Plain English for someone who reads code slowly.
 - Follow .claude/skills/unslop/SKILL.md: no filler, no hype, no em dashes.
-- Pictures beat paragraphs. Every claim in "Review card" links to a screenshot, clip, chart or check.
-- Keep each section short. If a section doesn't apply, write "None" and why.
+- Section doesn't apply? Write "- None: <reason>".
 -->
 
 ## In one line
 
-<!-- What changes, for whom. Example: "You can now add a job application and tag its tech stack." -->
+- <!-- What changes, for whom. e.g. "Add a job application and tag its stack" -->
 
 ## Why
 
-<!-- The problem this solves, and a link to the spec or issue. Two or three sentences. -->
+- **Problem:** <!-- what's wrong or missing today -->
+- **Spec:** <!-- link -->
+- **Depends on:** <!-- other pull requests to merge first, or "None" -->
 
 ## Review card
 
@@ -22,20 +25,19 @@ How to fill this in. Delete these notes when done.
 |---|---|---|
 | <!-- page or step --> | <!-- screenshot --> | <!-- screenshot --> |
 
-**Clip:** <!-- link to the Playwright recording of the change in use -->
-
-**Checks:** <!-- one line of ticks, e.g. ✅ build ✅ type check ✅ lint ✅ 42 unit tests ✅ 18 functional tests -->
+- **Clip:** <!-- link to the Playwright recording -->
+- **Checks:** <!-- ✅ build ✅ type check ✅ lint ✅ 42 unit tests ✅ 18 functional tests -->
 
 ## What the pictures can't show
 
-<!-- What a screenshot would miss, and how each was checked instead (test name, reviewer, manual).
-     Then list anything that was NOT checked at all. Never leave this empty. -->
+<!-- One row per risk a screenshot would miss. Never leave this empty. -->
 
 | Risk | How it was checked |
 |---|---|
 | | |
 
-**Not checked:** <!-- be honest -->
+**Not checked:**
+- <!-- be honest, one point each -->
 
 ## Code walkthrough
 
@@ -43,14 +45,15 @@ How to fill this in. Delete these notes when done.
      1. Core logic (the rules and decisions)
      2. Wiring (how it connects), condensed
      3. Boilerplate (generated, renames, config), one line each
-     Above each snippet, one plain-English line saying what it does. -->
+     Above each snippet, one dot point saying what it does. -->
 
-**What this does:** <!-- plain English -->
+- **Does:** <!-- plain English, one line -->
 ```
 <!-- snippet -->
 ```
 
-**Also changed (boilerplate):** <!-- one line per file or group -->
+**Also changed (boilerplate):**
+- <!-- one point per file or group -->
 
 ## Risk and undo
 
