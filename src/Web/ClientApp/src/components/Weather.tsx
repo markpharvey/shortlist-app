@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { WeatherForecastsClient } from '../web-api-client.ts';
+import { WeatherForecastsClient, type WeatherForecast } from '../web-api-client';
 
 export function Weather() {
-  const [forecasts, setForecasts] = useState([]);
+  const [forecasts, setForecasts] = useState<WeatherForecast[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -12,7 +12,7 @@ export function Weather() {
         const client = new WeatherForecastsClient();
         const data = await client.getWeatherForecasts();
         setForecasts(data);
-      } catch (e) {
+      } catch {
         setError('Unable to load weather forecasts. Please try again later.');
       } finally {
         setLoading(false);
@@ -39,8 +39,8 @@ export function Weather() {
           </thead>
           <tbody>
             {forecasts.map(forecast =>
-              <tr key={forecast.date}>
-                <td>{new Date(forecast.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+              <tr key={forecast.date?.toISOString()}>
+                <td>{forecast.date?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                 <td>{forecast.temperatureC}</td>
                 <td>{forecast.temperatureF}</td>
                 <td>{forecast.summary}</td>

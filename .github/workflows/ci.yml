@@ -19,14 +19,25 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: src/Web/ClientApp/package-lock.json
+      # The .NET build also writes the API description (wwwroot/openapi/v1.json)
+      # that the front end's typed API client is generated from.
+      - name: Build
+        run: dotnet build Shortlist.slnx -c Release
       - name: Install client packages
         working-directory: src/Web/ClientApp
         run: npm ci
+      - name: Generate the typed API client
+        working-directory: src/Web/ClientApp
+        run: npm run generate-api
+      - name: Type check client
+        working-directory: src/Web/ClientApp
+        run: npm run typecheck
       - name: Lint client
         working-directory: src/Web/ClientApp
         run: npm run lint
-      - name: Build
-        run: dotnet build Shortlist.slnx -c Release
+      - name: Build client
+        working-directory: src/Web/ClientApp
+        run: npm run build
       - name: Unit tests
         run: |
           dotnet test tests/Domain.UnitTests -c Release --no-build
