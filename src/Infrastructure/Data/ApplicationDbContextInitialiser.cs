@@ -5,6 +5,7 @@ using Shortlist.Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Shortlist.Infrastructure.Data;
@@ -18,7 +19,13 @@ public static class InitialiserExtensions
         var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
 
         await initialiser.InitialiseAsync();
-        await initialiser.SeedAsync();
+
+        // Sample data and the well-known administrator login are for local development only.
+        // A live site must never have a default account with a published password.
+        if (app.Environment.IsDevelopment())
+        {
+            await initialiser.SeedAsync();
+        }
     }
 }
 
@@ -41,14 +48,28 @@ public class ApplicationDbContextInitialiser
     {
         try
         {
-            // See https://jasontaylor.dev/ef-core-database-initialisation-strategies
-            await _context.Database.EnsureDeletedAsync();
-            await _context.Database.EnsureCreatedAsync();
+            // Apply any migrations the database hasn't had yet. Existing data is kept, so
+            // job applications survive restarts and deploys.
+            CreateFolderForSqliteFile(_context.Database.GetConnectionString());
+            await _context.Database.MigrateAsync();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while initialising the database.");
             throw;
+        }
+    }
+
+    // SQLite creates the database file but not the folder it lives in (e.g. /home/data on Azure).
+    private static void CreateFolderForSqliteFile(string? connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString)) return;
+
+        var dataSource = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connectionString).DataSource;
+        var folder = Path.GetDirectoryName(Path.GetFullPath(dataSource));
+        if (!string.IsNullOrEmpty(folder))
+        {
+            Directory.CreateDirectory(folder);
         }
     }
 
