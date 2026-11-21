@@ -1,0 +1,29 @@
+# One-off: generates the first EF Core migration and commits it back to this branch.
+name: gen-migrations
+on:
+  push:
+    branches: [gen/migrations]
+    paths: [.github/workflows/gen-migrations.yml]
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Generate
+        run: |
+          dotnet tool install --global dotnet-ef --version "10.*"
+          dotnet build src/Web -c Debug
+          dotnet ef migrations add InitialCreate --project src/Infrastructure --startup-project src/Web --output-dir Data/Migrations --no-build
+          git status --short
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/Infrastructure/Data/Migrations
+          git commit -m "Add the first database migration (InitialCreate)"
+          git push origin HEAD:gen/migrations
