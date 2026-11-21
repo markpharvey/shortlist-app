@@ -475,3 +475,10 @@ button.danger,
   small { color: var(--pico-del-color); }
   .error { color: var(--pico-del-color); }
 }
+
+// Pico's .grid class is switched off in this template ($enable-classes: false), so the form has its own.
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0 1rem;
+}

@@ -94,10 +94,14 @@ function fields(f: Form) {
   };
 }
 
-// Validation errors come back as { errors: { FieldName: ["message"] } }.
+// Validation errors come back as { errors: { fieldName: ["message"] } }. Keys are stored
+// lower-case so the lookup works whichever casing the server uses.
 function errorsFrom(e: unknown): Record<string, string[]> {
   if (e instanceof SwaggerException) {
-    try { return JSON.parse(e.response).errors ?? { '': ['Could not save.'] }; } catch { /* not JSON */ }
+    try {
+      const errors: Record<string, string[]> | undefined = JSON.parse(e.response).errors;
+      if (errors) return Object.fromEntries(Object.entries(errors).map(([k, v]) => [k.toLowerCase(), v]));
+    } catch { /* not JSON */ }
   }
   return { '': ['Could not save. Please try again.'] };
 }
@@ -181,7 +185,7 @@ export function Applications() {
   const top = vm.topTechnologies ?? [];
   const maxCount = Math.max(1, ...top.map(t => t.count ?? 0));
   const label = (list: typeof statuses, id: number | undefined) => list.find(l => l.id === id)?.title ?? '';
-  const err = (field: string) => errors[field]?.[0];
+  const err = (field: string) => errors[field.toLowerCase()]?.[0];
   const input = (field: keyof Form) => ({
     value: form[field] ?? '',
     onChange: (e: { target: { value: string } }) => setForm(f => ({ ...f, [field]: e.target.value })),
@@ -282,11 +286,11 @@ export function Applications() {
           </header>
           <form onSubmit={save} noValidate>
             {err('') && <p className="error">{err('')}</p>}
-            <div className="grid">
+            <div className="form-row">
               <label>Company<input id="company" {...input('company')} aria-invalid={err('Company') ? true : undefined} />{err('Company') && <small>{err('Company')}</small>}</label>
               <label>Job title<input id="jobTitle" {...input('jobTitle')} aria-invalid={err('JobTitle') ? true : undefined} />{err('JobTitle') && <small>{err('JobTitle')}</small>}</label>
             </div>
-            <div className="grid">
+            <div className="form-row">
               <label>Status
                 <select id="status" value={form.status} onChange={e => setStatus(e.target.value)}>
                   {statuses.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
@@ -294,7 +298,7 @@ export function Applications() {
               </label>
               <label>Date applied<input id="dateApplied" type="date" {...input('dateApplied')} aria-invalid={err('DateApplied') ? true : undefined} />{err('DateApplied') && <small>{err('DateApplied')}</small>}</label>
             </div>
-            <div className="grid">
+            <div className="form-row">
               <label>Work
                 <select id="workArrangement" {...input('workArrangement')}>
                   {arrangements.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
@@ -303,12 +307,12 @@ export function Applications() {
               <label>Location<input id="location" {...input('location')} placeholder="e.g. Brisbane CBD" /></label>
               <label>Commute (min)<input id="commuteMinutes" type="number" min={0} max={600} {...input('commuteMinutes')} aria-invalid={err('CommuteMinutes') ? true : undefined} />{err('CommuteMinutes') && <small>{err('CommuteMinutes')}</small>}</label>
             </div>
-            <div className="grid">
+            <div className="form-row">
               <label>Salary from ($/yr)<input id="salaryMin" type="number" min={0} step={1000} {...input('salaryMin')} /></label>
               <label>Salary to ($/yr)<input id="salaryMax" type="number" min={0} step={1000} {...input('salaryMax')} aria-invalid={err('SalaryMax') ? true : undefined} />{err('SalaryMax') && <small>{err('SalaryMax')}</small>}</label>
             </div>
             <label>Stack (comma separated)<input id="technologies" {...input('technologies')} placeholder="C#, React, Azure" /></label>
-            <div className="grid">
+            <div className="form-row">
               <label>Ad link<input id="adUrl" type="url" {...input('adUrl')} aria-invalid={err('AdUrl') ? true : undefined} />{err('AdUrl') && <small>{err('AdUrl')}</small>}</label>
               <label>Contact<input id="contact" {...input('contact')} /></label>
             </div>
