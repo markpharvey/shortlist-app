@@ -41,10 +41,12 @@ export function Tasks() {
     }).catch(console.error);
   }, []);
 
-  useEffect(() => {
+  // Switching lists clears the half-typed new item.
+  const selectList = id => {
+    setSelectedListId(id);
     setNewItemTitle('');
     setAddingItem(false);
-  }, [selectedListId]);
+  };
 
   const selectedList = lists?.find(l => l.id === selectedListId) ?? null;
   const remainingItems = list => list.items.filter(t => !t.done).length;
@@ -72,7 +74,7 @@ export function Tasks() {
       const id = await listsClient.createTodoList({ title: newListTitle.trim(), colour: newListColour });
       const newList = { id, title: newListTitle.trim(), colour: newListColour, items: [] };
       setLists(ls => [...ls, newList]);
-      setSelectedListId(id);
+      selectList(id);
       closeNewListDialog();
     } catch (e) {
       try {
@@ -113,7 +115,7 @@ export function Tasks() {
       await listsClient.deleteTodoList(selectedList.id);
       const remaining = lists.filter(l => l.id !== selectedList.id);
       setLists(remaining);
-      setSelectedListId(remaining.length ? remaining[0].id : null);
+      selectList(remaining.length ? remaining[0].id : null);
       closeDeleteListDialog();
     } catch (e) { console.error(e); }
   };
@@ -242,7 +244,7 @@ export function Tasks() {
             {lists.map(list => (
               <li key={list.id}
                 aria-current={selectedList === list ? 'true' : undefined}
-                onClick={() => setSelectedListId(list.id)}>
+                onClick={() => selectList(list.id)}>
                 <span className="colour-dot" style={{ background: list.colour }} aria-hidden="true"></span>
                 <span>{list.title}</span>
                 <small>{remainingItems(list)}</small>
