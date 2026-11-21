@@ -102,3 +102,9 @@ For acceptance tests, build first and install the Playwright Chromium browser us
 - Template directives and all affected variants remain valid.
 - Formatting, build, and relevant tests pass without introducing warnings.
 - Documentation and ADRs are updated when behaviour or architecture changes.
+
+## Writing for people (Shortlist)
+
+- Every pull request uses `.github/pull_request_template.md`. Fill in every section; the reader is the owner, who reviews by looking at the review card first.
+- All prose a person will read (pull requests, docs, commit messages, comments) follows `.claude/skills/unslop/SKILL.md`.
+- Code comments explain why, not what. Plain-English explanations of what code does belong in the pull request's code walkthrough, not in the code.
