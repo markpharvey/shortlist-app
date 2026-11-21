@@ -14,11 +14,15 @@ builder.AddWebServices();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Creates or upgrades the database on start, in every environment.
+// Skipped when the build runs the app only to write the API description.
+var writingApiDescription = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
+if (!writingApiDescription)
 {
     await app.InitialiseDatabaseAsync();
 }
-else
+
+if (!app.Environment.IsDevelopment())
 {
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();

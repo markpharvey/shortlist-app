@@ -1,0 +1,54 @@
+name: Deploy
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    # Only deploy after CI passes on main, or when started by hand.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://shortlist-mark-eddefwgfc6cdebbf.australiaeast-01.azurewebsites.net
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/Web/ClientApp/package-lock.json
+      # Publishing the web project also builds the React front end into wwwroot.
+      - name: Publish
+        run: dotnet publish src/Web/Web.csproj -c Release -o publish
+      - name: Deploy to Azure
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: shortlist-mark
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: publish
+      # Waits for the site to answer, so a broken deploy shows as a failed run.
+      - name: Check the site is up
+        run: |
+          url="https://shortlist-mark-eddefwgfc6cdebbf.australiaeast-01.azurewebsites.net"
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$url/" || true)
+            echo "Attempt $i: HTTP $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 15
+          done
+          echo "::error::Site did not answer with 200 after 5 minutes"
+          exit 1
