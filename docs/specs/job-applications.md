@@ -1,6 +1,6 @@
 # Spec: tracking job applications
 
-Status: **Approved by Mark, 21 November 2026**
+Status: **Approved by Mark, 21 November 2026.** Updated the same evening with the two-build split and the capture workflow (agreed by voice).
 Decision record: [ADR-004](../decisions/ADR-004-Job-Application-Data-Model.md)
 
 ## Why
@@ -45,14 +45,35 @@ Shortlist helps one person run a job hunt: keep every role in one place, see whe
 
 ## How we'll know it works (acceptance tests)
 
-- Domain tests: the rules above, one test per rule.
+- Unit tests: the rules above, one test per rule.
 - Functional tests (real database): create, edit, delete, filter, tag matching, and one user being unable to read another user's applications.
 - Front end: type check, lint and build pass.
 - Playwright walkthrough: add three applications with different stacks and arrangements, filter by tag and by commute, move one through to Interview. Recorded as the lesson for this feature.
 
-## Out of scope for this build
+## Builds
+
+### Build 1: the tracker (this spec, above)
+
+Entering applications by hand, the rules, filters and top stack tags.
+
+### Build 2: capture (next pull request)
+
+The main way to add jobs. Mark chooses every page; nothing is fetched automatically.
+
+1. **Suggested searches.** Shortlist offers ready-made Seek search links, e.g. "junior software engineer", ".NET developer", "AI engineer", for Brisbane, Gold Coast and Logan. Mark clicks one.
+2. **Open the ads you like.** Mark opens each interesting ad in its own browser tab.
+3. **One button reads them all.** A small browser extension reads each open job tab, sends the page to Shortlist, saves it as a draft and closes the tab.
+4. **AI fills in the fields.** Company, title, location, salary, work arrangement and stack tags are pulled from the ad text. Anything the AI is unsure of is flagged.
+5. **Review only the flags.** Mark checks the flagged fields, fixes or bins each draft, and saves.
+
+Also in build 2: follow-up reminders (e.g. "applied 7 days ago, follow up").
+
+Why this way: Seek's terms do not allow automated collecting, and opening ads in the background would count as that. Reading pages Mark has opened himself is him saving what he is reading. The AI step needs an API key, which Mark adds as a GitHub secret himself.
+
+## Out of scope for builds 1 and 2
 
 - Company as its own table (all roles at one company together).
-- Working out the commute automatically from a maps service. Planned as a separate integration feature, since it needs an API key and possibly a fee.
-- Reminders, file attachments (CVs, cover letters), importing ads from job sites.
-- Removing the template's sample Tasks and Weather pages. That is a separate, small change after this one.
+- Working out the commute automatically from a maps service. Needs an API key and possibly a fee.
+- Pulling new ads in automatically, from Seek or anywhere else. Possible later through job alert emails Mark already receives.
+- File attachments (CVs, cover letters).
+- Removing the template's sample Tasks and Weather pages. That is a separate, small change.
