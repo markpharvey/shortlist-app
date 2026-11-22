@@ -28,17 +28,10 @@ public class RegistrationGate : IEndpointFilter
         var allowed = (http.RequestServices.GetRequiredService<IConfiguration>()["Registration:AllowedEmails"] ?? string.Empty)
             .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        bool permitted;
-        if (allowed.Length > 0)
-        {
-            var email = context.Arguments.OfType<RegisterRequest>().FirstOrDefault()?.Email;
-            permitted = email != null && allowed.Contains(email, StringComparer.OrdinalIgnoreCase);
-        }
-        else
-        {
-            var users = http.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
-            permitted = !users.Users.Any();
-        }
+        var email = context.Arguments.OfType<RegisterRequest>().FirstOrDefault()?.Email;
+        var anyUsersExist = allowed.Length == 0
+            && http.RequestServices.GetRequiredService<UserManager<ApplicationUser>>().Users.Any();
+        var permitted = MayRegister(email, allowed, anyUsersExist);
 
         return permitted
             ? await next(context)
@@ -47,4 +40,9 @@ public class RegistrationGate : IEndpointFilter
                 detail: "This Shortlist belongs to someone else. Ask the owner to add your email address.",
                 statusCode: StatusCodes.Status403Forbidden);
     }
+
+    public static bool MayRegister(string? email, IReadOnlyCollection<string> allowedEmails, bool anyUsersExist) =>
+        allowedEmails.Count > 0
+            ? email != null && allowedEmails.Contains(email, StringComparer.OrdinalIgnoreCase)
+            : !anyUsersExist;
 }

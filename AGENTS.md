@@ -105,6 +105,14 @@ For acceptance tests, build first and install the Playwright Chromium browser us
 
 ## Writing for people (Shortlist)
 
-- Every pull request uses `.github/pull_request_template.md`. Fill in every section; the reader is the owner, who reviews by looking at the review card first.
+- Every pull request uses `.github/pull_request_template.md`. Fill in every section; the owner reviews the proof first and the folded code walkthrough is for learning only.
 - All prose a person will read (pull requests, docs, commit messages, comments) follows `.claude/skills/unslop/SKILL.md`.
 - Code comments explain why, not what. Plain-English explanations of what code does belong in the pull request's code walkthrough, not in the code.
+
+## Corrections become fences (Shortlist)
+
+- The owner reviews proof (screenshots, clips, test results), not code. Code that passes review has to be held in place by checks, not by a reader.
+- When the owner corrects you, or you find your own mistake, add a fence: a test, lint rule, architecture test or CI check that fails if it happens again. Add a row to `docs/corrections-log.md`.
+- A written rule in this file is the last resort. If a fence isn't possible yet, log it as "Rule only" or "Candidate" and say why.
+- Don't copy a workaround because it's already in the code. Agents spread whatever they see. If you find one, log it rather than repeating it.
+- Never weaken or delete a fence to make a change pass. Fix the cause.
