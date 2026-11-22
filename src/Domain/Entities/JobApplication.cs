@@ -1,5 +1,6 @@
 namespace Shortlist.Domain.Entities;
 
+[Microsoft.EntityFrameworkCore.Index(nameof(Company))]
 public class JobApplication : BaseAuditableEntity
 {
     public string OwnerId { get; set; } = string.Empty;
