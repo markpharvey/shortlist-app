@@ -1,0 +1,44 @@
+name: Factory
+
+# Copy this file into the repo the factory should work on, as .github/workflows/factory.yml, and set PROJECT below
+# to the repo's project folder in site-factory/projects. That project's "repo" must be this repo, or the engine
+# stops. The steps are in docs/load-a-repo.md.
+
+on:
+  issues:
+    types: [opened, reopened, unlabeled]
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: "How many runs in a row led to this one. Leave at 0 when starting a run by hand."
+        type: number
+        default: 0
+
+# One run at a time, in the order they were asked for. GitHub keeps this queue per repo.
+concurrency:
+  group: factory
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  factory:
+    # The most the engine's stages may have. Each stage asks for only its own share of this.
+    permissions:
+      actions: write
+      contents: write
+      issues: write
+      pull-requests: write
+    uses: markpharvey/site-factory/.github/workflows/engine.yml@main
+    with:
+      project: shortlist
+      chain: ${{ fromJSON(inputs.chain || '0') }}
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      FACTORY_WEBHOOK_URL: ${{ secrets.FACTORY_WEBHOOK_URL }}
+      FACTORY_WEBHOOK_TOKEN: ${{ secrets.FACTORY_WEBHOOK_TOKEN }}
+      FACTORY_ENGINE_TOKEN: ${{ secrets.FACTORY_ENGINE_TOKEN }}

@@ -491,3 +491,7 @@ $RECYCLE.BIN/
 *.db
 *.db-shm
 *.db-wal
+
+# Site Factory: the app it builds to picture, and its database
+.factory-app/
+Shortlist.db*

@@ -1,0 +1,30 @@
+name: Factory gardening
+
+# Once a week, the factory looks at what went wrong and proposes a wall for each weed. Runs Monday 7:17am
+# Brisbane time, or by hand with "Run workflow". The work is done by site-factory's garden.yml.
+
+on:
+  schedule:
+    - cron: "17 21 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: gardening
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  garden:
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    uses: markpharvey/site-factory/.github/workflows/garden.yml@main
+    with:
+      project: shortlist
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      FACTORY_ENGINE_TOKEN: ${{ secrets.FACTORY_ENGINE_TOKEN }}
+      FACTORY_WEBHOOK_URL: ${{ secrets.FACTORY_WEBHOOK_URL }}
+      FACTORY_WEBHOOK_TOKEN: ${{ secrets.FACTORY_WEBHOOK_TOKEN }}
